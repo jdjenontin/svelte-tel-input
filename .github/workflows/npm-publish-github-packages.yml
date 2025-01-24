@@ -1,67 +1,42 @@
-name: CI and Publish to GitLab Registry
+name: Build and Publish Package
 
 on:
   push:
     branches:
-      - main   # Trigger when changes are pushed to the 'main' branch
-  pull_request:
-    branches:
-      - main   # Trigger on PRs to the 'main' branch
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout the repository
-        uses: actions/checkout@v3
+      # Step 1: Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
+      # Step 2: Set up Node.js
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'  # Node version as per your package.json engines field
+          node-version: '18' # Matches the engine requirement
+          cache: pnpm      # Caches pnpm dependencies
 
-      - name: Set up pnpm
+      # Step 3: Install dependencies with pnpm
+      - name: Install dependencies
         run: |
           npm install -g pnpm
-          pnpm install --frozen-lockfile
+          pnpm install
 
-      - name: Build the package
+      # Step 4: Run linting, testing, and build scripts
+      - name: Lint, Test, and Build
         run: |
-          pnpm build:apps  # Or whatever build command fits your package setup
-          
-      - name: Run tests
-        run: pnpm test  # Make sure tests are passing before publishing
+          pnpm run lint
+          pnpm run test
+          pnpm run package
 
-  publish:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Checkout the repository
-        uses: actions/checkout@v3
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-
-      - name: Set up pnpm
+      # Step 5: Publish the package to GitHub Packages
+      - name: Publish to GitHub Packages
         run: |
-          npm install -g pnpm
-          pnpm install --frozen-lockfile
-
-      - name: Publish to GitLab Registry
+          pnpm publish --access public
         env:
-          CI_REGISTRY: ${{ secrets.GITLAB_REGISTRY_URL }}  # Set up this secret in GitHub
-          CI_REGISTRY_USER: ${{ secrets.GITLAB_USERNAME }}  # Set up this secret in GitHub
-          CI_REGISTRY_PASSWORD: ${{ secrets.GITLAB_TOKEN }}  # Set up this secret in GitHub
-        run: |
-          # Login to GitLab registry using GitLab credentials
-          echo "//${CI_REGISTRY}/:_authToken=${CI_REGISTRY_PASSWORD}" > ~/.npmrc
+          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
 
-          # Publish the package to the GitLab Registry (npm or GitLab registry)
-          pnpm publish --registry $CI_REGISTRY --access public  # Adjust the access level and registry if needed
-          
-          # Alternatively, you can use GitLab's Docker registry, which would involve a different command
-          # docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-          # docker push $CI_REGISTRY/your-image
-          
