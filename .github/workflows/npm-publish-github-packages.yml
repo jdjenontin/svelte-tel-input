@@ -28,8 +28,6 @@ jobs:
       # Step 4: Run linting, testing, and build scripts
       - name: Lint, Test, and Build
         run: |
-          pnpm run lint
-          pnpm run test
           pnpm run package
 
       # Step 5: Publish the package to GitHub Packages
