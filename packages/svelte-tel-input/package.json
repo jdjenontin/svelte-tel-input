@@ -4,9 +4,12 @@
 	"version": "3.5.2",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/gyurielf/svelte-tel-input.git"
+		"url": "git+https://github.com/jdjenontin/svelte-tel-input.git"
 	},
-	"homepage": "https://github.com/gyurielf/svelte-tel-input#readme",
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com/"
+	},
+	"homepage": "https://github.com/jdjenontin/svelte-tel-input#readme",
 	"keywords": [
 		"svelte",
 		"svelte kit",
