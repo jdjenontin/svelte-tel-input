@@ -1,39 +1,36 @@
-name: Build and Publish Package
+name: Node.js Package
 
 on:
   push:
     branches:
       - main
+  release:
+    types: [created]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Checkout the repository
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      # Step 2: Set up Node.js
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '18' # Matches the engine requirement
+          node-version: 20
+      - run: npm install -g pnpm
+      - run: pnpm install
+      - run: pnpm run package
 
-      # Step 3: Install dependencies with pnpm
-      - name: Install dependencies
-        run: |
-          npm install -g pnpm
-          pnpm install
-
-      # Step 4: Run linting, testing, and build scripts
-      - name: Lint, Test, and Build
-        run: |
-          pnpm run package
-
-      # Step 5: Publish the package to GitHub Packages
-      - name: Publish to GitHub Packages
-        run: |
-          pnpm publish --access public
+  publish-gpr:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://npm.pkg.github.com/
+      - run: pnpm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
-
